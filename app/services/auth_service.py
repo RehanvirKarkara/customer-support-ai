@@ -1,89 +1,109 @@
+from datetime import datetime, timedelta, timezone
+
+from jose import JWTError, jwt
+from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.models.user import User
 from app.repositories.user_repository import UserRepository
-from app.schemas.user import UserCreate
-from app.core.security import (
-    hash_password,
-    verify_password,
-    create_access_token,
+
+
+pwd_context = CryptContext(
+    schemes=["bcrypt"],
+    deprecated="auto"
 )
 
+
 class AuthService:
-    """
-    Handles all authentication related business logic.
-    """
 
     def __init__(self, db: Session):
-        self.user_repository = UserRepository(db)
+        self.user_repo = UserRepository(db)
 
-    def register(self, user_data: UserCreate) -> User:
-        """
-        Register a new Airtel customer.
-        """
+    # -------------------------
+    # Password Hashing
+    # -------------------------
 
-        # Check Customer ID
-        existing_customer = self.user_repository.get_user_by_customer_id(
-            user_data.customer_id
+    def hash_password(self, password: str) -> str:
+        return pwd_context.hash(password)
+
+    def verify_password(
+        self,
+        plain_password: str,
+        hashed_password: str,
+    ) -> bool:
+        return pwd_context.verify(
+            plain_password,
+            hashed_password
         )
 
-        if existing_customer:
-            raise ValueError("Customer ID already exists.")
+    # -------------------------
+    # JWT Token
+    # -------------------------
 
-        # Check Email
-        existing_email = self.user_repository.get_user_by_email(
-            user_data.email
+    def create_access_token(
+        self,
+        user: User,
+    ) -> str:
+
+        expire = datetime.now(
+            timezone.utc
+        ) + timedelta(
+            minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
         )
 
-        if existing_email:
-            raise ValueError("Email already registered.")
+        payload = {
+            "sub": str(user.id),
+            "customer_id": user.customer_id,
+            "exp": expire,
+        }
 
-        # Hash Password
-        hashed_password = hash_password(user_data.password)
-
-        # Create User Model
-        new_user = User(
-            customer_id=user_data.customer_id,
-            name=user_data.name,
-            email=user_data.email,
-            phone=user_data.phone,
-            password_hash=hashed_password,
+        return jwt.encode(
+            payload,
+            settings.SECRET_KEY,
+            algorithm=settings.ALGORITHM,
         )
 
-        return self.user_repository.create_user(new_user)
+    # -------------------------
+    # Register
+    # -------------------------
 
-    def login(self, email: str, password: str) -> str:
-        """
-        Login Airtel customer.
-        Returns JWT Token.
-        """
+    def register_user(
+        self,
+        user: User,
+    ):
 
-        user = self.user_repository.get_user_by_email(email)
+        user.password_hash = self.hash_password(
+            user.password_hash
+        )
+
+        return self.user_repo.create_user(user)
+
+    # -------------------------
+    # Login
+    # -------------------------
+
+    def login(
+        self,
+        email: str,
+        password: str,
+    ):
+
+        user = self.user_repo.get_user_by_email(email)
 
         if not user:
-            raise ValueError("Invalid email or password.")
+            return None
 
-        if not verify_password(password, user.password_hash):
-            raise ValueError("Invalid email or password.")
+        if not self.verify_password(
+            password,
+            user.password_hash,
+        ):
+            return None
 
-        token = create_access_token(
-            data={
-                "sub": str(user.id),
-                "customer_id": user.customer_id,
-                "email": user.email,
-            }
-        )
+        token = self.create_access_token(user)
 
-        return token
-
-    def get_profile(self, user_id: int) -> User:
-        """
-        Return logged-in user's profile.
-        """
-
-        user = self.user_repository.get_user_by_id(user_id)
-
-        if not user:
-            raise ValueError("User not found.")
-
-        return user
+        return {
+            "access_token": token,
+            "token_type": "bearer",
+            "user": user,
+        }
