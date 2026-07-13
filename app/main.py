@@ -1,10 +1,15 @@
 from fastapi import FastAPI
 from app.core.config import settings
+from app.api.v1.tickets import router as ticket_router
 
 app = FastAPI(
     title="Customer Support AI",
     description="Backend API for AI-powered customer support.",
     version="1.0.0",
+)
+app.include_router(
+    ticket_router,
+    prefix="/api/v1"
 )
 
 @app.get("/")
