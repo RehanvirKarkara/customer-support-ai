@@ -1,17 +1,18 @@
 from datetime import datetime, timedelta, timezone
 
-from jose import JWTError, jwt
+from jose import jwt
 from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.models.user import User
 from app.repositories.user_repository import UserRepository
+from app.schemas.user import UserCreate
 
 
 pwd_context = CryptContext(
     schemes=["bcrypt"],
-    deprecated="auto"
+    deprecated="auto",
 )
 
 
@@ -34,7 +35,7 @@ class AuthService:
     ) -> bool:
         return pwd_context.verify(
             plain_password,
-            hashed_password
+            hashed_password,
         )
 
     # -------------------------
@@ -68,13 +69,33 @@ class AuthService:
     # Register
     # -------------------------
 
-    def register_user(
+    def register(
         self,
-        user: User,
-    ):
+        user_data: UserCreate,
+    ) -> User:
 
-        user.password_hash = self.hash_password(
-            user.password_hash
+        # Check email
+        if self.user_repo.get_user_by_email(user_data.email):
+            raise ValueError("Email already registered.")
+
+        # Check customer ID
+        if self.user_repo.get_user_by_customer_id(
+            user_data.customer_id
+        ):
+            raise ValueError("Customer ID already exists.")
+
+        user = User(
+            customer_id=user_data.customer_id,
+            full_name=user_data.full_name,
+            email=user_data.email,
+            hashed_password=self.hash_password(
+                user_data.password
+            ),
+            mobile_number=user_data.mobile_number,
+            service_type=user_data.service_type,
+            customer_type=user_data.customer_type,
+            preferred_language=user_data.preferred_language,
+            circle=user_data.circle,
         )
 
         return self.user_repo.create_user(user)
@@ -92,18 +113,12 @@ class AuthService:
         user = self.user_repo.get_user_by_email(email)
 
         if not user:
-            return None
+            raise ValueError("Invalid email or password.")
 
         if not self.verify_password(
             password,
-            user.password_hash,
+            user.hashed_password,
         ):
-            return None
+            raise ValueError("Invalid email or password.")
 
-        token = self.create_access_token(user)
-
-        return {
-            "access_token": token,
-            "token_type": "bearer",
-            "user": user,
-        }
+        return self.create_access_token(user)

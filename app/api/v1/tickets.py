@@ -1,6 +1,7 @@
+from app.models.ticket import Ticket
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-
+from app.models.ticket import TicketStatus
 from app.core.database import get_db
 from app.schemas.ticket import (
     TicketCreate,
@@ -23,10 +24,18 @@ router = APIRouter(
     response_model=TicketResponse,
 )
 def create_ticket(
-    ticket: TicketCreate,
+    ticket_data: TicketCreate,
     db: Session = Depends(get_db),
 ):
     service = TicketService(db)
+
+    ticket = Ticket(
+        title=ticket_data.title,
+        description=ticket_data.description,
+        priority=ticket_data.priority,
+        status=TicketStatus.OPEN,
+        user_id=1,      # Temporary until authentication is added
+    )
 
     try:
         return service.create_ticket(ticket)

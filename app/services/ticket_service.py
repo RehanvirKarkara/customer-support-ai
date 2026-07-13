@@ -4,6 +4,7 @@ from app.models.ticket import Ticket
 from app.models.user import User
 from app.repositories.ticket_repository import TicketRepository
 from app.repositories.user_repository import UserRepository
+from app.schemas import ticket
 from app.schemas.ticket import TicketCreate, TicketUpdate
 from app.models.ticket import TicketStatus
 
@@ -14,21 +15,7 @@ class TicketService:
         self.ticket_repository = TicketRepository(db)
         self.user_repository = UserRepository(db)
 
-    def create_ticket(self, ticket_data: TicketCreate) -> Ticket:
-
-        user = self.user_repository.get_user_by_id(ticket_data.user_id)
-
-        if not user:
-            raise ValueError("User does not exist.")
-
-        ticket = Ticket(
-            title=ticket_data.title,
-            description=ticket_data.description,
-            priority=ticket_data.priority,
-            status=ticket_data.status or TicketStatus.OPEN,
-            user_id=ticket_data.user_id,
-        )
-
+    def create_ticket(self, ticket: Ticket) -> Ticket:
         return self.ticket_repository.create_ticket(ticket)
 
     def get_ticket(self, ticket_id: int) -> Ticket:

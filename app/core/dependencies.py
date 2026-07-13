@@ -1,10 +1,9 @@
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from jose import JWTError, jwt
 from sqlalchemy.orm import Session
 
-from app.core.config import settings
 from app.core.database import get_db
+from app.core.security import decode_access_token
 from app.models.user import User
 from app.repositories.user_repository import UserRepository
 
@@ -15,27 +14,26 @@ def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
     db: Session = Depends(get_db),
 ) -> User:
+    """
+    Get the currently authenticated user from JWT token.
+    """
 
     token = credentials.credentials
 
     try:
-        payload = jwt.decode(
-            token,
-            settings.SECRET_KEY,
-            algorithms=[settings.ALGORITHM],
-        )
+        payload = decode_access_token(token)
 
         user_id = int(payload["sub"])
 
-    except (JWTError, KeyError, ValueError):
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authentication token.",
+            detail="Invalid or expired authentication token.",
         )
 
-    repository = UserRepository(db)
+    user_repository = UserRepository(db)
 
-    user = repository.get_user_by_id(user_id)
+    user = user_repository.get_user_by_id(user_id)
 
     if user is None:
         raise HTTPException(
