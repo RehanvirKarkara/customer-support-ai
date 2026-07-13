@@ -56,6 +56,11 @@ class Ticket(Base):
         "User",
         back_populates="tickets"
     )
+    tickets = relationship(
+    "Ticket",
+    back_populates="user",
+    cascade="all, delete-orphan"
+)
 
     def __repr__(self):
         return (
