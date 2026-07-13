@@ -1,8 +1,10 @@
-from app.models.ticket import Ticket
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from app.models.ticket import TicketStatus
+
 from app.core.database import get_db
+from app.core.dependencies import get_current_user
+from app.models.ticket import Ticket, TicketStatus
+from app.models.user import User
 from app.schemas.ticket import (
     TicketCreate,
     TicketUpdate,
@@ -22,11 +24,14 @@ router = APIRouter(
 @router.post(
     "/",
     response_model=TicketResponse,
+    status_code=status.HTTP_201_CREATED,
 )
 def create_ticket(
     ticket_data: TicketCreate,
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+
     service = TicketService(db)
 
     ticket = Ticket(
@@ -34,17 +39,10 @@ def create_ticket(
         description=ticket_data.description,
         priority=ticket_data.priority,
         status=TicketStatus.OPEN,
-        user_id=1,      # Temporary until authentication is added
+        user_id=current_user.id,
     )
 
-    try:
-        return service.create_ticket(ticket)
-
-    except ValueError as e:
-        raise HTTPException(
-            status_code=400,
-            detail=str(e),
-        )
+    return service.create_ticket(ticket)
 
 
 # -------------------------
@@ -58,6 +56,7 @@ def get_ticket(
     ticket_id: int,
     db: Session = Depends(get_db),
 ):
+
     service = TicketService(db)
 
     try:
@@ -65,7 +64,7 @@ def get_ticket(
 
     except ValueError as e:
         raise HTTPException(
-            status_code=404,
+            status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e),
         )
 
@@ -80,8 +79,27 @@ def get_ticket(
 def get_all_tickets(
     db: Session = Depends(get_db),
 ):
+
     service = TicketService(db)
+
     return service.get_all_tickets()
+
+
+# -------------------------
+# Get Current User Tickets
+# -------------------------
+@router.get(
+    "/me",
+    response_model=list[TicketResponse],
+)
+def get_my_tickets(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+
+    service = TicketService(db)
+
+    return service.get_user_tickets(current_user.id)
 
 
 # -------------------------
@@ -93,17 +111,21 @@ def get_all_tickets(
 )
 def update_ticket(
     ticket_id: int,
-    ticket: TicketUpdate,
+    ticket_data: TicketUpdate,
     db: Session = Depends(get_db),
 ):
+
     service = TicketService(db)
 
     try:
-        return service.update_ticket(ticket_id, ticket)
+        return service.update_ticket(
+            ticket_id,
+            ticket_data,
+        )
 
     except ValueError as e:
         raise HTTPException(
-            status_code=404,
+            status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e),
         )
 
@@ -111,14 +133,18 @@ def update_ticket(
 # -------------------------
 # Delete Ticket
 # -------------------------
-@router.delete("/{ticket_id}")
+@router.delete(
+    "/{ticket_id}",
+)
 def delete_ticket(
     ticket_id: int,
     db: Session = Depends(get_db),
 ):
+
     service = TicketService(db)
 
     try:
+
         service.delete_ticket(ticket_id)
 
         return {
@@ -126,7 +152,8 @@ def delete_ticket(
         }
 
     except ValueError as e:
+
         raise HTTPException(
-            status_code=404,
+            status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e),
         )

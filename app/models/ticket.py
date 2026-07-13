@@ -3,6 +3,7 @@ from enum import Enum
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy import ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import relationship
 
 from app.core.database import Base
 
@@ -64,3 +65,10 @@ class Ticket(Base):
             f"title='{self.title}', "
             f"status='{self.status}')>"
         )
+        
+    conversation = relationship(
+    "Conversation",
+    back_populates="ticket",
+    uselist=False,
+    cascade="all, delete-orphan",)
+        
