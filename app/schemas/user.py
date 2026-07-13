@@ -2,7 +2,6 @@ from pydantic import BaseModel, EmailStr, Field
 from typing import Optional
 from enum import Enum
 
-
 class CustomerType(str, Enum):
     PREPAID = "PREPAID"
     POSTPAID = "POSTPAID"
@@ -42,3 +41,7 @@ class UserResponse(BaseModel):
     model_config = {
         "from_attributes": True
     }
+    
+class Token(BaseModel):
+    access_token: str
+    token_type: str

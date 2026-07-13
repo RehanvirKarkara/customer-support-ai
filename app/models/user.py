@@ -2,9 +2,9 @@ from datetime import datetime
 from enum import Enum
 
 from sqlalchemy import Boolean, DateTime, Enum as SQLEnum, String
-from sqlalchemy.orm import Mapped, mapped_column
-
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.database import Base
+from sqlalchemy.orm import relationship
 
 class ServiceType(str, Enum):
     PREPAID = "PREPAID"
@@ -102,6 +102,12 @@ class User(Base):
         DateTime,
         default=datetime.utcnow,
         onupdate=datetime.utcnow,
+    )
+    
+    tickets = relationship(
+    "Ticket",
+    back_populates="user",
+    cascade="all, delete-orphan"
     )
 
     def __repr__(self):
