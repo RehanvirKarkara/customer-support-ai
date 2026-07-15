@@ -34,3 +34,9 @@ class Conversation(Base):
         "Ticket",
         back_populates="conversation",
     )
+    
+    messages = relationship(
+    "Message",
+    back_populates="conversation",
+    cascade="all, delete-orphan"
+    )
