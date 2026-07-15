@@ -13,6 +13,7 @@ from app.models.user import User
 from app.models.ticket import Ticket
 from app.models.conversation import Conversation
 from app.models.message import Message
+from app.models.knowledge import Knowledge
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
