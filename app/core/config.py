@@ -14,6 +14,8 @@ class Settings(BaseSettings):
 
     GROQ_API_KEY: str
     GEMINI_API_KEY: str
+    
+    GEMINI_EMBEDDING_MODEL: str = "gemini-embedding-001"
 
     CHROMA_DB_PATH: str
     CHROMA_COLLECTION: str
