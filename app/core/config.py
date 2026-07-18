@@ -13,9 +13,14 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
 
     GROQ_API_KEY: str
+    GEMINI_API_KEY: str
+
+    CHROMA_DB_PATH: str
+    CHROMA_COLLECTION: str
 
     model_config = SettingsConfigDict(
         env_file=".env",
+        extra="ignore",
         case_sensitive=True
     )
 
