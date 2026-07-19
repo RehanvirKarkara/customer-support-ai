@@ -38,3 +38,16 @@ dist/
 # Database
 *.db
 *.sqlite3
+# ChromaDB
+chroma_db/
+
+# Uploaded files
+uploads/
+
+# Python
+__pycache__/
+*.pyc
+
+# Environment
+.env
+.venv/
