@@ -1,4 +1,5 @@
 from sqlalchemy.orm import Session
+import os
 
 from app.models.knowledge import (
     Knowledge,
@@ -94,6 +95,14 @@ class KnowledgeService:
                 "Knowledge document not found."
             )
 
+        # Delete file from disk
+        if (
+            knowledge.file_path
+            and os.path.exists(knowledge.file_path)
+        ):
+            os.remove(knowledge.file_path)
+
+        # Delete database record
         self.repository.delete(
             knowledge
         )

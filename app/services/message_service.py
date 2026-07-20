@@ -95,6 +95,39 @@ class MessageService:
         )
 
     # -------------------------
+    # Get Recent Messages
+    # -------------------------
+
+    def get_recent_messages(
+        self,
+        conversation_id: int,
+        limit: int = 5,
+    ):
+        """
+        Returns the most recent messages from a conversation.
+        """
+
+        conversation = (
+            self.conversation_repository
+            .get_conversation_by_id(
+                conversation_id
+            )
+        )
+
+        if conversation is None:
+            raise ValueError(
+                "Conversation not found."
+            )
+
+        return (
+            self.message_repository
+            .get_recent_messages(
+                conversation_id=conversation_id,
+                limit=limit,
+            )
+        )
+
+    # -------------------------
     # Delete Message
     # -------------------------
 

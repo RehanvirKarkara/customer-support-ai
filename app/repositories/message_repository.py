@@ -59,6 +59,37 @@ class MessageRepository:
         )
 
     # -------------------------
+    # Get Recent Messages
+    # -------------------------
+
+    def get_recent_messages(
+        self,
+        conversation_id: int,
+        limit: int = 5,
+    ):
+        """
+        Returns the latest messages from a conversation.
+
+        We first fetch the newest messages,
+        then reverse them so the AI receives them
+        in chronological order.
+        """
+
+        messages = (
+            self.db.query(Message)
+            .filter(
+                Message.conversation_id == conversation_id
+            )
+            .order_by(
+                Message.created_at.desc()
+            )
+            .limit(limit)
+            .all()
+        )
+
+        return list(reversed(messages))
+
+    # -------------------------
     # Delete Message
     # -------------------------
 

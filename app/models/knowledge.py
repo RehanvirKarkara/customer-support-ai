@@ -37,6 +37,12 @@ class Knowledge(Base):
         nullable=False,
     )
 
+    vector_document_id: Mapped[str | None] = mapped_column(
+    String(36),
+    unique=True,
+    nullable=True,
+    )
+    
     status: Mapped[KnowledgeStatus] = mapped_column(
         SQLEnum(KnowledgeStatus),
         default=KnowledgeStatus.UPLOADED,
