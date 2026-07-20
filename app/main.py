@@ -5,7 +5,9 @@ from app.api.v1.tickets import router as ticket_router
 from app.api.v1.conversations import router as conversation_router
 from app.api.v1.messages import router as message_router
 #from app.api.v1.knowledge import router as knowledge_router
-from app.routers import knowledge
+#from app.routers import knowledge
+from app.api.v1.knowledge import router as knowledge_router
+from app.api.v1.chat import router as chat_router
 
 app = FastAPI(
     title="Customer Support AI",
@@ -33,14 +35,20 @@ app.include_router(
     prefix="/api/v1"
 )
 
-#app.include_router(
-    #knowledge_router,
-    #prefix="/api/v1"
-#)
-
+app.include_router(
+    knowledge_router,
+    prefix="/api/v1"
+)
+'''
 app.include_router(
     knowledge.router,
     prefix="/api/v1",
+)
+'''
+
+app.include_router(
+    chat_router,
+    prefix="/api/v1"
 )
 
 @app.get("/")
